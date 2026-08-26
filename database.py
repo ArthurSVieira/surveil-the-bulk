@@ -15,7 +15,36 @@ def init_db():
     )
     ''')
 
+    col.execute(''' CREATE TABLE IF NOT EXISTS decks(
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    format VARCHAR(50),
+    color_ident VARCHAR(50) NOT NULL
+    )
+    ''')
+
+    col.execute(''' CREATE TABLE IF NOT EXISTS cards(
+    id TEXT PRIMARY KEY NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    mana_cost VARCHAR(50),
+    type_line VARCHAR(50), 
+    set_code  VARCHAR(50),
+    image_url TEXT
+    )
+    ''')
+
+    col.execute(''' CREATE TABLE IF NOT EXISTS card_tags(
+    card_id TEXT NOT NULL ,
+    tag_id INT NOT NULL,
+    PRIMARY KEY (card_id, tag_id),
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+
+    )
+    ''')
+    
+
     col.commit()
     return
 
-init_db
+init_db()
