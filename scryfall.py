@@ -11,9 +11,11 @@ headers = {
 
 
 
-def search_card_exact(card_name):
+def search_card_exact(card_name, set_code=None):
     search_name = urllib.parse.quote(card_name)  
-    searchurl = url + search_name
+    searchurl = url + search_name 
+    if(set_code != None):
+        searchurl+='&set='+set_code
     response = requests.get(searchurl, headers=headers)
     response.raise_for_status()
 
@@ -21,4 +23,4 @@ def search_card_exact(card_name):
     return json_data
     
 
-print(search_card_exact('Sol Ring'))
+print(search_card_exact('Sol Ring','slz'))
