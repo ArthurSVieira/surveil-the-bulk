@@ -21,4 +21,4 @@ def search_card_exact(card_name):
     return json_data
     
 
-print(search_card_exact('Sol Ring').name)
+print(search_card_exact('Sol Ring'))
