@@ -43,6 +43,26 @@ def init_db():
     )
     ''')
     
+    col.execute(''' CREATE TABLE IF NOT EXISTS card_decks(
+    card_id TEXT NOT NULL ,
+    deck_id INT NOT NULL ,
+    quantity INT NOT NULL DEFAULT 1,
+    board_type TEXT NOT NULL DEFAULT 'Mainboard',
+    PRIMARY KEY (card_id, deck_id, board_type),
+    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE,
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+
+    )
+    ''')
+
+    col.execute(''' CREATE TABLE IF NOT EXISTS scryfall_cache(
+    query_url TEXT PRIMARY KEY NOT NULL,
+    json_data TEXT NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    
+    )
+    ''')
+    
 
     col.commit()
     return
