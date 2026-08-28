@@ -61,7 +61,3 @@ def normalize_card_data(raw_card):
             'oracle_text':raw_card['oracle_text'],
              }
      return dictcard
-
-
-print(normalize_card_data(search_card_exact('Sol Ring')))
-print(normalize_card_data(search_card_exact('Delver of Secrets')))

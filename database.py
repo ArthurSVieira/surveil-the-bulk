@@ -1,7 +1,28 @@
 import sqlite3
+from scryfall import search_card_exact, normalize_card_data
+
 
 col = sqlite3.connect('collection.db')
 
+def insert_card(card_data):
+    collumns = [
+    'id', 'name', 'produced_mana', 'color_identity', 'power', 'toughness', 
+        'mana_cost', 'type_line', 'set_code', 'oracle_text', 'image_url',
+        'a_name', 'a_mana_cost', 'a_type_line', 'a_power', 'a_toughness', 'a_image_url', 'a_oracle_text'
+    ]
+
+    sql = '''
+    INSERT OR REPLACE INTO cards (
+        id, name, produced_mana, color_identity, power, toughness, mana_cost, 
+        type_line, set_code, oracle_text, image_url,
+        a_name, a_mana_cost, a_type_line, a_power, a_toughness, a_image_url, a_oracle_text
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    '''
+
+    values = tuple(card_data.get(col) for col in collumns)
+    col.execute(sql, values)
+    col.commit()
+    print(f" {card_data.get('name')} added to database ")
 
 
 def init_db():
@@ -25,11 +46,27 @@ def init_db():
 
     col.execute(''' CREATE TABLE IF NOT EXISTS cards(
     id TEXT PRIMARY KEY NOT NULL,
+    own_qty INT DEFAULT 0,
+    wnt_qty INT DEFAULT 0,
+    trd_qty INT DEFAULT 0,
     name VARCHAR(50) NOT NULL,
+    produced_mana TEXT,
+    color_identity TEXT,
+    power VARCHAR(50),
+    toughness VARCHAR(50),
     mana_cost VARCHAR(50),
     type_line VARCHAR(50), 
     set_code  VARCHAR(50),
-    image_url TEXT
+    oracle_text TEXT,
+    image_url TEXT,
+
+    a_name VARCHAR(50),
+    a_mana_cost VARCHAR(50),
+    a_type_line VARCHAR(50),
+    a_power VARCHAR(50),
+    a_toughness VARCHAR(50),
+    a_image_url TEXT,
+    a_oracle_text TEXT
     )
     ''')
 
@@ -64,7 +101,17 @@ def init_db():
     ''')
     
 
+
     col.commit()
     return
 
 init_db()
+def add_card(card, setC=None):
+        rawdata = search_card_exact(card,setC)
+        insert_card(normalize_card_data(rawdata))
+        
+
+
+
+
+add_card("Sol Ring")
