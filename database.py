@@ -124,6 +124,40 @@ def update_inventory(card, own_qty = 0, wnt_qty = 0, trd_qty = 0):
     col.commit()
     print(f"Inventario de {card} atualizado! ")
 
+def view_colection(filter_type = 'all'):
+    if(filter_type == 'bulk'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        own_qty > 0
+        ''' 
+    elif(filter_type == 'trade'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        trd_qty > 0
+        ''' 
+    elif(filter_type == 'want'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        wnt_qty > 0
+        ''' 
+    elif(filter_type == 'all'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        wnt_qty > 0 OR trd_qty > 0 OR own_qty >0
+        ''' 
+    else:
+        print("Filtro inválido! Escolha 'bulk', 'trade', 'want' ou 'all'.")
+        return
+    
+    cursor = col.execute(query)
+    rows = cursor.fetchall()
+    for row in rows:
+        print(row)
 
 
-update_inventory("Bolt Bend",2,2,1)
+update_inventory('Arcane Signet', 0, 2, 0)
+view_colection('trade')
