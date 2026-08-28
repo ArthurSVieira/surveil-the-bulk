@@ -25,11 +25,27 @@ def init_db():
 
     col.execute(''' CREATE TABLE IF NOT EXISTS cards(
     id TEXT PRIMARY KEY NOT NULL,
+    own_qty INT DEFAULT 0,
+    wnt_qty INT DEFAULT 0,
+    trd_qty INT DEFAULT 0,
     name VARCHAR(50) NOT NULL,
+    produced_mana TEXT,
+    color_identity TEXT,
+    power VARCHAR(50),
+    toughness VARCHAR(50),
     mana_cost VARCHAR(50),
     type_line VARCHAR(50), 
     set_code  VARCHAR(50),
-    image_url TEXT
+    oracle_text TEXT,
+    image_url TEXT,
+
+    a_name VARCHAR(50),
+    a_mana_cost VARCHAR(50),
+    a_type_line VARCHAR(50),
+    a_power VARCHAR(50),
+    a_toughness VARCHAR(50),
+    a_image_url TEXT,
+    a_oracle_text TEXT
     )
     ''')
 
