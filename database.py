@@ -12,7 +12,7 @@ def insert_card(card_data):
     ]
 
     sql = '''
-    INSERT OR REPLACE INTO cards (
+    INSERT OR IGNORE INTO cards (
         id, name, produced_mana, color_identity, power, toughness, mana_cost, 
         type_line, set_code, oracle_text, image_url,
         a_name, a_mana_cost, a_type_line, a_power, a_toughness, a_image_url, a_oracle_text
@@ -110,8 +110,20 @@ def add_card(card, setC=None):
         rawdata = search_card_exact(card,setC)
         insert_card(normalize_card_data(rawdata))
         
+def update_inventory(card, own_qty = 0, wnt_qty = 0, trd_qty = 0):
+    add_card(card)
+    sql = '''
+    UPDATE cards 
+    SET own_qty = own_qty + ?, 
+        wnt_qty = wnt_qty + ?, 
+        trd_qty = trd_qty + ?
+    WHERE name = ?
+    '''
+    values = (own_qty, wnt_qty ,trd_qty ,card)
+    col.execute(sql, values)
+    col.commit()
+    print(f"Inventario de {card} atualizado! ")
 
 
 
-
-add_card("Sol Ring")
+update_inventory("Bolt Bend",2,2,1)
