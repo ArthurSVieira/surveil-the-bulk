@@ -107,6 +107,8 @@ def init_db():
 
 init_db()
 def add_card(card, setC=None):
+
+
         rawdata = search_card_exact(card,setC)
         insert_card(normalize_card_data(rawdata))
         
@@ -159,5 +161,5 @@ def view_colection(filter_type = 'all'):
         print(row)
 
 
-update_inventory('Arcane Signet', 0, 2, 0)
-view_colection('trade')
+update_inventory('Lightning Bolt', 1, 0, 0)
+update_inventory('Lightning Bolt', 1, 0, 0)
