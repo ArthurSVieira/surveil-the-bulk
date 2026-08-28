@@ -1,12 +1,14 @@
 import requests
 import urllib.parse
+import sqlite3
+import json
 
 url ='https://api.scryfall.com/cards/named?exact='
 headers = {
     "Accept": "application/json",
     "User-Agent": 'MBO:Magic Bulk Organizer'
 }
-
+col = sqlite3.connect('collection.db')
 
 
 def search_card_exact(card_name, set_code=None):
@@ -14,11 +16,28 @@ def search_card_exact(card_name, set_code=None):
     searchurl = url + search_name 
     if(set_code != None):
         searchurl+='&set='+set_code
-    response = requests.get(searchurl, headers=headers)
-    response.raise_for_status()
+    value = searchurl
+    querycheck = ''' SELECT json_data FROM
+                scryfall_cache WHERE
+                query_url = ?
+                '''
+    
+    cursor = col.execute(querycheck, (searchurl,))
+    resultB = cursor.fetchone()
+    if(resultB == None):
+        response = requests.get(searchurl, headers=headers)
+        response.raise_for_status()
 
-    json_data = response.json()
-    return json_data
+        json_data = response.json()
+        valuesI = (searchurl, response.text)
+        insertquery = ''' INSERT OR IGNORE INTO scryfall_cache (
+                    query_url,json_data
+                    ) VALUES (?,?)
+                    '''
+        col.execute(insertquery, valuesI)
+        col.commit()
+        return json_data
+    return  json.loads(resultB[0])
     
 def normalize_card_data(raw_card):
      
@@ -61,7 +80,3 @@ def normalize_card_data(raw_card):
             'oracle_text':raw_card['oracle_text'],
              }
      return dictcard
-
-
-print(normalize_card_data(search_card_exact('Sol Ring')))
-print(normalize_card_data(search_card_exact('Delver of Secrets')))

@@ -1,7 +1,28 @@
 import sqlite3
+from scryfall import search_card_exact, normalize_card_data
+
 
 col = sqlite3.connect('collection.db')
 
+def insert_card(card_data):
+    collumns = [
+    'id', 'name', 'produced_mana', 'color_identity', 'power', 'toughness', 
+        'mana_cost', 'type_line', 'set_code', 'oracle_text', 'image_url',
+        'a_name', 'a_mana_cost', 'a_type_line', 'a_power', 'a_toughness', 'a_image_url', 'a_oracle_text'
+    ]
+
+    sql = '''
+    INSERT OR IGNORE INTO cards (
+        id, name, produced_mana, color_identity, power, toughness, mana_cost, 
+        type_line, set_code, oracle_text, image_url,
+        a_name, a_mana_cost, a_type_line, a_power, a_toughness, a_image_url, a_oracle_text
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    '''
+
+    values = tuple(card_data.get(col) for col in collumns)
+    col.execute(sql, values)
+    col.commit()
+    print(f" {card_data.get('name')} added to database ")
 
 
 def init_db():
@@ -80,7 +101,65 @@ def init_db():
     ''')
     
 
+
     col.commit()
     return
 
 init_db()
+def add_card(card, setC=None):
+
+
+        rawdata = search_card_exact(card,setC)
+        insert_card(normalize_card_data(rawdata))
+        
+def update_inventory(card, own_qty = 0, wnt_qty = 0, trd_qty = 0):
+    add_card(card)
+    sql = '''
+    UPDATE cards 
+    SET own_qty = own_qty + ?, 
+        wnt_qty = wnt_qty + ?, 
+        trd_qty = trd_qty + ?
+    WHERE name = ?
+    '''
+    values = (own_qty, wnt_qty ,trd_qty ,card)
+    col.execute(sql, values)
+    col.commit()
+    print(f"Inventario de {card} atualizado! ")
+
+def view_colection(filter_type = 'all'):
+    if(filter_type == 'bulk'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        own_qty > 0
+        ''' 
+    elif(filter_type == 'trade'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        trd_qty > 0
+        ''' 
+    elif(filter_type == 'want'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        wnt_qty > 0
+        ''' 
+    elif(filter_type == 'all'):
+       query = f'''
+        SELECT name,own_qty, wnt_qty , trd_qty FROM
+        cards WHERE
+        wnt_qty > 0 OR trd_qty > 0 OR own_qty >0
+        ''' 
+    else:
+        print("Filtro inválido! Escolha 'bulk', 'trade', 'want' ou 'all'.")
+        return
+    
+    cursor = col.execute(query)
+    rows = cursor.fetchall()
+    for row in rows:
+        print(row)
+
+
+update_inventory('Lightning Bolt', 1, 0, 0)
+update_inventory('Lightning Bolt', 1, 0, 0)
