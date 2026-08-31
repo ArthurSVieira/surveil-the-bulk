@@ -157,9 +157,14 @@ def view_colection(filter_type = 'all'):
     
     cursor = col.execute(query)
     rows = cursor.fetchall()
+    result = []
     for row in rows:
-        print(row)
+       carta = {'name':row[0],
+         'own_qty':row[1],
+         'wnt_qty':row[2],
+         'trd_qty':row[3]  
+         }
+       result.append(carta)
+    
+    return result
 
-
-update_inventory('Lightning Bolt', 1, 0, 0)
-update_inventory('Lightning Bolt', 1, 0, 0)
