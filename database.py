@@ -111,7 +111,16 @@ def add_card(card, setC=None):
 
         rawdata = search_card_exact(card,setC)
         insert_card(normalize_card_data(rawdata))
-        
+
+def add_deck(name,format,color_identity):
+    query = ''' INSERT OR IGNORE INTO decks(
+        name, format, color_ident) VALUES (?,?,?)        
+    '''
+    values = (name,format,color_identity)
+    col.execute(query, values)
+    col.commit()
+    print(f"new deck: {name} added to database")
+
 def update_inventory(card, own_qty = 0, wnt_qty = 0, trd_qty = 0):
     add_card(card)
     sql = '''
@@ -157,9 +166,27 @@ def view_colection(filter_type = 'all'):
     
     cursor = col.execute(query)
     rows = cursor.fetchall()
+    result = []
     for row in rows:
-        print(row)
+       carta = {'name':row[0],
+         'own_qty':row[1],
+         'wnt_qty':row[2],
+         'trd_qty':row[3]  
+         }
+       result.append(carta)
+    
+    return result
 
-
-update_inventory('Lightning Bolt', 1, 0, 0)
-update_inventory('Lightning Bolt', 1, 0, 0)
+def view_decks():
+    query = '''SELECT name, format, color_ident FROM
+    decks '''
+    cursor = col.execute(query)
+    rows = cursor.fetchall()
+    result = []
+    for row in rows:
+        deck = {'name':row[0],
+         'format':row[1],
+         'color_ident':row[2] 
+         }
+        result.append(deck)
+    return result
