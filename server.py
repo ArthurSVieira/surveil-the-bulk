@@ -1,5 +1,5 @@
 from aiohttp import web
-from database import view_colection, update_inventory, view_decks, add_deck
+from database import view_colection, update_inventory, view_decks, add_deck, add_card_to_deck
 import json 
 
 async def update_collection(request):
@@ -31,6 +31,17 @@ async def get_collection(request):
     filtr = request.query.get('filter', 'all')
     return web.json_response(view_colection(filtr))
 
+
+async def insert_card_to_deck(request):
+    dados = await request.json()
+    deck_name = dados.get('deck_name')
+    card_name = dados.get('card_name')
+    quantity = dados.get('quantity')
+    
+    add_card_to_deck(deck_name,card_name,quantity)
+    return web.Response(text="Carta adicionada ao deck")
+
+
 async def status(request):
     server_data = {
         'status': "StB API online",
@@ -44,6 +55,7 @@ app.add_routes([web.get('/api/status', status),
                 web.get('/api/decks', get_decks),
                 web.get('/api/cards', get_collection),
                 web.post('/api/decks', create_deck),
+                web.post('/api/decks/cards', insert_card_to_deck),
                 web.post('/api/cards', update_collection)])
 
 web.run_app(app)
