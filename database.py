@@ -106,6 +106,55 @@ def init_db():
     return
 
 init_db()
+
+def add_card_to_deck(deck_name, card_name, quantity):
+    cQuery = ''' SELECT id from cards WHERE
+                name = ?
+    '''
+    cursor = col.execute(cQuery, (card_name,))
+    result = cursor.fetchone()
+    if(result == None):
+        update_inventory(card_name,0,1,0)
+        cursor = col.execute(cQuery, (card_name,))
+        result = cursor.fetchone()
+    cardId = result[0]
+    
+    dQuery = ''' SELECT id from decks WHERE
+                name = ?
+    '''
+    cursor = col.execute(dQuery, (deck_name,))
+    result = cursor.fetchone()
+    deckId = result[0]
+
+    sql = '''INSERT OR IGNORE INTO card_decks 
+            (card_id, deck_id, quantity) VALUES (?,?,?)
+
+    '''
+    values = (cardId,deckId,quantity)
+    col.execute(sql, values)
+    col.commit()
+    print("Cartas adicionadas ao deck!")
+
+def show_decklist(deck_name):
+    query = ''' SELECT c.name, cd.quantity, cd.board_type FROM 
+card_decks cd JOIN decks d on cd.deck_id = d.id
+JOIN cards c on c.id = cd.card_id WHERE d.name = ?'''
+
+    cursor = col.execute(query, (deck_name,))
+    rows = cursor.fetchall()
+
+    result = []
+    for row in rows:
+        card = {
+            'name': row[0],
+            'quantity': row[1],
+            'board_type': row[2],
+        }
+        result.append(card)
+    return result
+
+
+
 def add_card(card, setC=None):
 
 
