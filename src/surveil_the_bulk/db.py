@@ -2,7 +2,11 @@ import sqlite3
 
 from surveil_the_bulk.scryfall import normalize_card_data, search_card_exact
 
-col = sqlite3.connect("collection.db")
+def get_connection():
+    conn = sqlite3.connect('collection.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
 
 
 def insert_card(card_data):
@@ -36,15 +40,15 @@ def insert_card(card_data):
     """
 
     values = tuple(card_data.get(col) for col in collumns)
-    col.execute(sql, values)
-    col.commit()
+    conn.execute(sql, values)
+    conn.commit()
     print(f" {card_data.get('name')} added to database ")
 
 
 def init_db():
-    col.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA foreign_keys = ON")
 
-    col.execute(""" CREATE TABLE IF NOT EXISTS tags(
+    conn.execute(""" CREATE TABLE IF NOT EXISTS tags(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(50) NOT NULL UNIQUE,
     color VARCHAR(50) NOT NULL DEFAULT '#3b82f6',
@@ -52,7 +56,7 @@ def init_db():
     )
     """)
 
-    col.execute(""" CREATE TABLE IF NOT EXISTS decks(
+    conn.execute(""" CREATE TABLE IF NOT EXISTS decks(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(50) NOT NULL,
     format VARCHAR(50),
@@ -60,7 +64,7 @@ def init_db():
     )
     """)
 
-    col.execute(""" CREATE TABLE IF NOT EXISTS cards(
+    conn.execute(""" CREATE TABLE IF NOT EXISTS cards(
     id TEXT PRIMARY KEY NOT NULL,
     own_qty INT DEFAULT 0,
     wnt_qty INT DEFAULT 0,
@@ -86,7 +90,7 @@ def init_db():
     )
     """)
 
-    col.execute(""" CREATE TABLE IF NOT EXISTS card_tags(
+    conn.execute(""" CREATE TABLE IF NOT EXISTS card_tags(
     card_id TEXT NOT NULL ,
     tag_id INT NOT NULL,
     PRIMARY KEY (card_id, tag_id),
@@ -96,7 +100,7 @@ def init_db():
     )
     """)
 
-    col.execute(""" CREATE TABLE IF NOT EXISTS card_decks(
+    conn.execute(""" CREATE TABLE IF NOT EXISTS card_decks(
     card_id TEXT NOT NULL ,
     deck_id INT NOT NULL ,
     quantity INT NOT NULL DEFAULT 1,
@@ -108,7 +112,7 @@ def init_db():
     )
     """)
 
-    col.execute(""" CREATE TABLE IF NOT EXISTS scryfall_cache(
+    conn.execute(""" CREATE TABLE IF NOT EXISTS scryfall_cache(
     query_url TEXT PRIMARY KEY NOT NULL,
     json_data TEXT NOT NULL, 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -116,24 +120,24 @@ def init_db():
     )
     """)
 
-    col.commit()
+    conn.commit()
 
 def add_card_to_deck(deck_name, card_name, quantity):
     cQuery = """ SELECT id from cards WHERE
                 name = ?
     """
-    cursor = col.execute(cQuery, (card_name,))
+    cursor = conn.execute(cQuery, (card_name,))
     result = cursor.fetchone()
     if result == None:
         update_inventory(card_name, 0, 1, 0)
-        cursor = col.execute(cQuery, (card_name,))
+        cursor = conn.execute(cQuery, (card_name,))
         result = cursor.fetchone()
     cardId = result[0]
 
     dQuery = """ SELECT id from decks WHERE
                 name = ?
     """
-    cursor = col.execute(dQuery, (deck_name,))
+    cursor = conn.execute(dQuery, (deck_name,))
     result = cursor.fetchone()
     deckId = result[0]
 
@@ -142,8 +146,8 @@ def add_card_to_deck(deck_name, card_name, quantity):
 
     """
     values = (cardId, deckId, quantity)
-    col.execute(sql, values)
-    col.commit()
+    conn.execute(sql, values)
+    conn.commit()
     print("Cartas adicionadas ao deck!")
 
 
@@ -152,7 +156,7 @@ def show_decklist(deck_name):
 card_decks cd JOIN decks d on cd.deck_id = d.id
 JOIN cards c on c.id = cd.card_id WHERE d.name = ?"""
 
-    cursor = col.execute(query, (deck_name,))
+    cursor = conn.execute(query, (deck_name,))
     rows = cursor.fetchall()
 
     result = []
@@ -177,8 +181,8 @@ def add_deck(name, format, color_identity):
         name, format, color_ident) VALUES (?,?,?)        
     """
     values = (name, format, color_identity)
-    col.execute(query, values)
-    col.commit()
+    conn.execute(query, values)
+    conn.commit()
     print(f"new deck: {name} added to database")
 
 
@@ -192,8 +196,8 @@ def update_inventory(card, own_qty=0, wnt_qty=0, trd_qty=0):
     WHERE name = ?
     """
     values = (own_qty, wnt_qty, trd_qty, card)
-    col.execute(sql, values)
-    col.commit()
+    conn.execute(sql, values)
+    conn.commit()
     print(f"Inventario de {card} atualizado! ")
 
 
@@ -226,7 +230,7 @@ def view_colection(filter_type="all"):
         print("Filtro inválido! Escolha 'bulk', 'trade', 'want' ou 'all'.")
         return
 
-    cursor = col.execute(query)
+    cursor = conn.execute(query)
     rows = cursor.fetchall()
     result = []
     for row in rows:
@@ -244,7 +248,7 @@ def view_colection(filter_type="all"):
 def view_decks():
     query = """SELECT name, format, color_ident FROM
     decks """
-    cursor = col.execute(query)
+    cursor = conn.execute(query)
     rows = cursor.fetchall()
     result = []
     for row in rows:
