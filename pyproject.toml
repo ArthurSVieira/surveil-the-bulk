@@ -1,0 +1,20 @@
+[project]
+name = "surveil-the-bulk"
+version = "0.1.0"
+description = "REST API for advanced Magic: The Gathering collection analysis, wantlist/tradelist management and sharing, and deckbuilding tools."
+readme = "README.md"
+authors = [
+    { name = "Arthur Vieira", email = "arthurssivieira@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "aiohttp>=3.14.3",
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+mtg-collection = "mtg_collection:main"
+
+[build-system]
+requires = ["uv_build>=0.12.8,<0.13.0"]
+build-backend = "uv_build"
