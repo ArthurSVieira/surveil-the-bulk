@@ -1,12 +1,10 @@
 import json
-import sqlite3
 import urllib.parse
 
 import requests
 
 url = "https://api.scryfall.com/cards/named?exact="
 headers = {"Accept": "application/json", "User-Agent": "MBO:Magic Bulk Organizer"}
-col = sqlite3.connect("collection.db")
 
 
 def search_card_exact(card_name, set_code=None):
@@ -14,13 +12,6 @@ def search_card_exact(card_name, set_code=None):
     searchurl = url + search_name
     if set_code != None:
         searchurl += "&set=" + set_code
-    querycheck = """ SELECT json_data FROM
-                scryfall_cache WHERE
-                query_url = ?
-                """
-
-    cursor = col.execute(querycheck, (searchurl,))
-    resultB = cursor.fetchone()
     if resultB == None:
         response = requests.get(searchurl, headers=headers)
         response.raise_for_status()
