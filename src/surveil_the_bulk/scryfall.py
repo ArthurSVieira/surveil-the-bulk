@@ -12,20 +12,14 @@ def search_card_exact(card_name, set_code=None):
     searchurl = url + search_name
     if set_code != None:
         searchurl += "&set=" + set_code
-    if resultB == None:
-        response = requests.get(searchurl, headers=headers)
-        response.raise_for_status()
+    
+    
+    response = requests.get(searchurl, headers=headers)
+    response.raise_for_status()
 
-        json_data = response.json()
-        valuesI = (searchurl, response.text)
-        insertquery = """ INSERT OR IGNORE INTO scryfall_cache (
-                    query_url,json_data
-                    ) VALUES (?,?)
-                    """
-        col.execute(insertquery, valuesI)
-        col.commit()
-        return json_data
-    return json.loads(resultB[0])
+    json_data = response.json()
+    return json_data
+
 
 
 def normalize_card_data(raw_card):
