@@ -1,6 +1,6 @@
 import sqlite3
 
-from scryfall import normalize_card_data, search_card_exact
+from surveil_the_bulk.scryfall import normalize_card_data, search_card_exact
 
 col = sqlite3.connect("collection.db")
 
@@ -117,10 +117,6 @@ def init_db():
     """)
 
     col.commit()
-
-
-init_db()
-
 
 def add_card_to_deck(deck_name, card_name, quantity):
     cQuery = """ SELECT id from cards WHERE
