@@ -1,5 +1,5 @@
 from aiohttp import web
-from database import view_colection, update_inventory, view_decks, add_deck, add_card_to_deck
+from database import view_colection, update_inventory, view_decks, add_deck, add_card_to_deck, show_decklist
 import json 
 
 async def update_collection(request):
@@ -41,6 +41,9 @@ async def insert_card_to_deck(request):
     add_card_to_deck(deck_name,card_name,quantity)
     return web.Response(text="Carta adicionada ao deck")
 
+async def get_decklist(request):
+    deck_name = request.query.get('deck')
+    return  web.json_response(show_decklist(deck_name))
 
 async def status(request):
     server_data = {
@@ -54,6 +57,7 @@ app = web.Application()
 app.add_routes([web.get('/api/status', status),
                 web.get('/api/decks', get_decks),
                 web.get('/api/cards', get_collection),
+                web.get('/api/decks/cards', get_decklist),
                 web.post('/api/decks', create_deck),
                 web.post('/api/decks/cards', insert_card_to_deck),
                 web.post('/api/cards', update_collection)])
