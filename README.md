@@ -19,7 +19,7 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/ArthurSVieira/MagicTheCollection.git](https://github.com/ArthurSVieira/MagicTheCollection.git)
+   git clone [https://github.com/ArthurSVieira/MagicTheCollection.git](https://github.com/ArthurSVieira/surveil-the-bulk.git)
    cd MagicTheCollection
    ```
 
