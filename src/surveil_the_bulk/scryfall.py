@@ -2,6 +2,7 @@ import json
 import urllib.parse
 
 import requests
+from surveil_the_bulk.models import CardFace, MTGCard
 
 url = "https://api.scryfall.com/cards/named?exact="
 headers = {"Accept": "application/json", "User-Agent": "MBO:Magic Bulk Organizer"}
@@ -20,44 +21,8 @@ def search_card_exact(card_name, set_code=None):
     json_data = response.json()
     return json_data
 
+def normalize_card_data(raw_data: dict):
+    card = MTGCard.model_validate(raw_data)
+    return card
 
-
-def normalize_card_data(raw_card):
-
-    if "card_faces" in raw_card:
-        dictcard = {
-            "id": raw_card["id"],
-            "set_code": raw_card["set"],
-            "color_identity": ",".join(raw_card["color_identity"]),
-            "produced_mana": ",".join(raw_card.get("produced_mana", [])),
-            "name": raw_card["card_faces"][0]["name"],
-            "mana_cost": raw_card["card_faces"][0]["mana_cost"],
-            "type_line": raw_card["card_faces"][0]["type_line"],
-            "power": raw_card["card_faces"][0].get("power"),
-            "toughness": raw_card["card_faces"][0].get("toughness"),
-            "image_url": raw_card["card_faces"][0]["image_uris"]["normal"],
-            "oracle_text": raw_card["card_faces"][0]["oracle_text"],
-            "a_name": raw_card["card_faces"][1]["name"],
-            "a_mana_cost": raw_card["card_faces"][1]["mana_cost"],
-            "a_type_line": raw_card["card_faces"][1]["type_line"],
-            "a_power": raw_card["card_faces"][1].get("power"),
-            "a_toughness": raw_card["card_faces"][1].get("toughness"),
-            "a_image_url": raw_card["card_faces"][1]["image_uris"]["normal"],
-            "a_oracle_text": raw_card["card_faces"][1]["oracle_text"],
-        }
-
-    else:
-        dictcard = {
-            "id": raw_card["id"],
-            "set_code": raw_card["set"],
-            "name": raw_card["name"],
-            "mana_cost": raw_card["mana_cost"],
-            "type_line": raw_card["type_line"],
-            "power": raw_card.get("power"),
-            "toughness": raw_card.get("toughness"),
-            "image_url": raw_card["image_uris"]["normal"],
-            "color_identity": ",".join(raw_card["color_identity"]),
-            "produced_mana": ",".join(raw_card.get("produced_mana", [])),
-            "oracle_text": raw_card["oracle_text"],
-        }
-    return dictcard
+print(normalize_card_data(search_card_exact('Sol Ring')).model_dump_json(indent=2))
