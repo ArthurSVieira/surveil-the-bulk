@@ -1,4 +1,6 @@
-from aiohttp import web
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 
 from surveil_the_bulk.db import (
     add_card_to_deck,
@@ -10,56 +12,79 @@ from surveil_the_bulk.db import (
 )
 
 
-async def update_collection(request):
-    dados = await request.json()
 
-    card = dados.get("name")
-    own_qty = dados.get("own_qty", 0)
-    wnt_qty = dados.get("wnt_qty", 0)
-    trd_qty = dados.get("trd_qty", 0)
-
-    update_inventory(card, own_qty, wnt_qty, trd_qty)
-    return web.Response(text="Colecao atualizada com sucesso")
+pageRouter = APIRouter()
+apiRouter = APIRouter(prefix="/api") 
 
 
-async def create_deck(request):
-    dados = await request.json()
 
-    name = dados.get("name")
-    format = dados.get("format")
-    color = dados.get("color_ident")
-
-    add_deck(name, format, color)
-    return web.Response(text="Deck adicionado com sucesso")
+@pageRouter.get("/", response_class=HTMLResponse, include_in_schema = False)
+def home():
+    return f"<h1>This is the home page!<h1>"
 
 
-async def get_decks(request):
-    return web.json_response(view_decks())
+class CollectionRequest(BaseModel):
+    name: str
+    own_qty: int = 0
+    wnt_qty: int = 0
+    trd_qty: int = 0
 
 
-async def get_collection(request):
-    filtr = request.query.get("filter", "all")
-    return web.json_response(view_colection(filtr))
+@apiRouter.post("/cards")
+async def update_collection(dados: CollectionRequest):
+    update_inventory(
+        dados.name,
+        dados.own_qty, 
+        dados.wnt_qty, 
+        dados.trd_qty
+    )
+    return  "Colecao atualizada com sucesso"
+
+class DeckRequest(BaseModel):
+    name: str
+    format: str
+    color: str 
+
+@apiRouter.post("/decks")
+async def create_deck(deck: DeckRequest):
+    add_deck(deck.name, 
+    deck.format, 
+    deck.color
+    )
+    return "Deck adicionado com sucesso"
 
 
-async def insert_card_to_deck(request):
-    dados = await request.json()
-    deck_name = dados.get("deck_name")
-    card_name = dados.get("card_name")
-    quantity = dados.get("quantity")
+@apiRouter.get("/decks")
+async def get_decks():
+    return view_decks()
 
-    add_card_to_deck(deck_name, card_name, quantity)
-    return web.Response(text="Carta adicionada ao deck")
-
-
-async def get_decklist(request):
-    deck_name = request.query.get("deck")
-    return web.json_response(show_decklist(deck_name))
+@apiRouter.get("/cards")
+async def get_collection(filter:str = "all"):
+    return view_colection(filter)
 
 
-async def status(request):
+class CardToDeckRequest(BaseModel):
+    deck_name: str
+    card_name: str
+    quantity: int
+
+@apiRouter.post("/decks/cards")
+async def insert_card_to_deck(info: CardToDeckRequest):
+    add_card_to_deck(
+        info.deck_name, 
+        info.card_name, 
+        info.quantity
+        )
+    return "Carta adicionada ao deck"
+
+@apiRouter.get("/deck/cards/{deck}")
+async def get_decklist(deck: str):
+    return show_decklist(deck)
+
+@apiRouter.get("/status")
+async def status():
     server_data = {"status": "StB API online", "version": "1.0"}
 
-    return web.json_response(server_data)
+    return server_data
 
 
