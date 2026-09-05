@@ -5,7 +5,7 @@ import requests
 from surveil_the_bulk.models import CardFace, MTGCard
 
 url = "https://api.scryfall.com/cards/named?exact="
-headers = {"Accept": "application/json", "User-Agent": "MBO:Magic Bulk Organizer"}
+headers = {"Accept": "application/json", "User-Agent": "STB:Surveil The Bulk"}
 
 
 def search_card_exact(card_name, set_code=None):
