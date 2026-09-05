@@ -1,6 +1,7 @@
 import sqlite3
 import json
 
+from surveil_the_bulk.models import CardFace, MTGCard
 from surveil_the_bulk.scryfall import normalize_card_data, search_card_exact
 
 def get_connection():
@@ -9,42 +10,47 @@ def get_connection():
     return conn
 
 
-def insert_card(card_data):
+def insert_card(card: MTGCard):
     conn = get_connection()
-    collumns = [
-        "id",
-        "name",
-        "produced_mana",
-        "color_identity",
-        "power",
-        "toughness",
-        "mana_cost",
-        "type_line",
-        "set_code",
-        "oracle_text",
-        "image_url",
-        "a_name",
-        "a_mana_cost",
-        "a_type_line",
-        "a_power",
-        "a_toughness",
-        "a_image_url",
-        "a_oracle_text",
-    ]
+    conn.execute("PRAGMA foreign_keys = ON")
 
-    sql = """
-    INSERT OR IGNORE INTO cards (
-        id, name, produced_mana, color_identity, power, toughness, mana_cost, 
-        type_line, set_code, oracle_text, image_url,
-        a_name, a_mana_cost, a_type_line, a_power, a_toughness, a_image_url, a_oracle_text
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    Cquery = """ INSERT OR IGNORE INTO cards (
+        id,set_code, collector_number,cmc,price_usd,price_usd_foil,
+        color_identity,produced_mana,legalities) VALUES (
+        ?,?,?,?,?,?,?,?,?)
     """
-
-    values = tuple(card_data.get(col) for col in collumns)
-    conn.execute(sql, values)
+    Cvalues = (
+        card.id,
+        card.set_code,
+        card.collector_number,
+        card.cmc,
+        100 * card.price_usd if card.price_usd else 0,
+        100 * card.price_usd_foil if card.price_usd_foil else 0,
+        "".join(card.color_identity),
+        "".join(card.produced_mana) if card.produced_mana else 0,
+        ",".join(card.legalities)
+    )
+    conn.execute(Cquery,Cvalues)
+    for index, face in enumerate(card.card_faces):
+        conn.execute (""" INSERT OR IGNORE INTO card_faces (
+        card_id,face_index,name,power,toughness,
+        mana_cost,type_line,oracle_text,image_url) VALUES 
+        (?,?,?,?,?,?,?,?,?)
+        """,(
+            card.id,
+            index,
+            face.name,
+            face.power,
+            face.toughness,
+            face.mana_cost,
+            face.type_line,
+            face.oracle_text,
+            face.image_url
+        )
+        )
     conn.commit()
     conn.close()
-    print(f" {card_data.get('name')} added to database ")
+    print(f" {card.card_faces[0].name} added to database ")
 
 
 def init_db():
@@ -68,30 +74,34 @@ def init_db():
     """)
 
     conn.execute(""" CREATE TABLE IF NOT EXISTS cards(
-    id TEXT PRIMARY KEY NOT NULL,
-    own_qty INT DEFAULT 0,
-    wnt_qty INT DEFAULT 0,
-    trd_qty INT DEFAULT 0,
-    name VARCHAR(50) NOT NULL,
-    produced_mana TEXT,
-    color_identity TEXT,
-    power VARCHAR(50),
-    toughness VARCHAR(50),
-    mana_cost VARCHAR(50),
-    type_line VARCHAR(50), 
-    set_code  VARCHAR(50),
-    oracle_text TEXT,
-    image_url TEXT,
-
-    a_name VARCHAR(50),
-    a_mana_cost VARCHAR(50),
-    a_type_line VARCHAR(50),
-    a_power VARCHAR(50),
-    a_toughness VARCHAR(50),
-    a_image_url TEXT,
-    a_oracle_text TEXT
+        id TEXT PRIMARY KEY NOT NULL,
+        set_code TEXT,
+        collector_number TEXT,
+        cmc REAL,
+        price_usd REAL,
+        price_usd_foil REAL,
+        color_identity TEXT,
+        produced_mana TEXT,
+        legalities TEXT,
+        own_qty INT DEFAULT 0,
+        wnt_qty INT DEFAULT 0,
+        trd_qty INT DEFAULT 0
+    )"""
     )
-    """)
+
+    conn.execute(""" CREATE TABLE IF NOT EXISTS card_faces(
+        card_id TEXT NOT NULL,
+        face_index INT NOT NULL,
+        name TEXT NOT NULL,
+        mana_cost TEXT,
+        type_line TEXT,
+        oracle_text TEXT,
+        image_url TEXT,
+        power TEXT,
+        toughness TEXT,
+        PRIMARY KEY (card_id, face_index),
+        FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+    )""")
 
     conn.execute(""" CREATE TABLE IF NOT EXISTS card_tags(
     card_id TEXT NOT NULL ,
@@ -156,7 +166,9 @@ def save_cached_response(card_name, set_code, raw_json_data):
 
 def add_card_to_deck(deck_name, card_name, quantity):
     conn = get_connection()
-    cQuery = """ SELECT id from cards WHERE name = ? """
+    cQuery = """ SELECT c.id FROM cards c 
+        JOIN card_faces cf ON c.id = cf.card_id 
+        WHERE cf.name = ? AND cf.face_index = 0"""
     cursor = conn.execute(cQuery, (card_name,))
     result = cursor.fetchone()
     conn.close()
@@ -188,9 +200,12 @@ def add_card_to_deck(deck_name, card_name, quantity):
 
 def show_decklist(deck_name):
     conn = get_connection()
-    query = """ SELECT c.name, cd.quantity, cd.board_type FROM 
-card_decks cd JOIN decks d on cd.deck_id = d.id
-JOIN cards c on c.id = cd.card_id WHERE d.name = ?"""
+    query = """ SELECT cf.name, cd.quantity, cd.board_type FROM 
+    card_decks cd JOIN decks d on cd.deck_id = d.id
+    JOIN cards c on c.id = cd.card_id 
+    JOIN card_faces cf on c.id = cf.card_id 
+    WHERE d.name = ? AND cf.face_index = 0   
+    """
 
     cursor = conn.execute(query, (deck_name,))
     rows = cursor.fetchall()
@@ -233,9 +248,10 @@ def update_inventory(card, own_qty=0, wnt_qty=0, trd_qty=0):
     sql = """
     UPDATE cards 
     SET own_qty = own_qty + ?, 
-        wnt_qty = wnt_qty + ?, 
-        trd_qty = trd_qty + ?
-    WHERE name = ?
+    wnt_qty = wnt_qty + ?, 
+    trd_qty = trd_qty + ?
+    WHERE id = (SELECT card_id FROM card_faces 
+    WHERE name = ? AND face_index = 0)
     """
     values = (own_qty, wnt_qty, trd_qty, card)
     conn.execute(sql, values)
@@ -247,13 +263,25 @@ def update_inventory(card, own_qty=0, wnt_qty=0, trd_qty=0):
 def view_colection(filter_type="all"):
     conn = get_connection()
     if filter_type == "bulk":
-        query = "SELECT name, own_qty, wnt_qty, trd_qty FROM cards WHERE own_qty > 0"
+        query = """SELECT cf.name, c.own_qty, c.wnt_qty, c.trd_qty 
+                FROM cards c 
+                JOIN card_faces cf ON c.id = cf.card_id 
+                WHERE cf.face_index = 0 AND c.own_qty > 0"""
     elif filter_type == "trade":
-        query = "SELECT name, own_qty, wnt_qty, trd_qty FROM cards WHERE trd_qty > 0"
+        query = """SELECT cf.name, c.own_qty, c.wnt_qty, c.trd_qty 
+                FROM cards c 
+                JOIN card_faces cf ON c.id = cf.card_id 
+                WHERE cf.face_index = 0 AND c.trd_qty > 0"""
     elif filter_type == "want":
-        query = "SELECT name, own_qty, wnt_qty, trd_qty FROM cards WHERE wnt_qty > 0"
+        query = """SELECT cf.name, c.own_qty, c.wnt_qty, c.trd_qty 
+                FROM cards c 
+                JOIN card_faces cf ON c.id = cf.card_id 
+                WHERE cf.face_index = 0 AND c.wnt_qty > 0"""
     elif filter_type == "all":
-        query = "SELECT name, own_qty, wnt_qty, trd_qty FROM cards WHERE wnt_qty > 0 OR trd_qty > 0 OR own_qty > 0"
+        query = """SELECT cf.name, c.own_qty, c.wnt_qty, c.trd_qty 
+                FROM cards c 
+                JOIN card_faces cf ON c.id = cf.card_id 
+                WHERE cf.face_index = 0 AND (c.own_qty > 0 OR c.wnt_qty > 0 OR c.trd_qty > 0)"""
     else:
         print("Filtro inválido! Escolha 'bulk', 'trade', 'want' ou 'all'.")
         conn.close()
