@@ -25,4 +25,4 @@ def normalize_card_data(raw_data: dict):
     card = MTGCard.model_validate(raw_data)
     return card
 
-print(normalize_card_data(search_card_exact('Sol Ring')).model_dump_json(indent=2))
+print(normalize_card_data(search_card_exact('Rapacious Dragon')).model_dump_json(indent=2))
