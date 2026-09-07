@@ -7,13 +7,12 @@ from surveil_the_bulk.scryfall import normalize_card_data, search_card_exact
 def get_connection():
     conn = sqlite3.connect('collection.db')
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
 def insert_card(card: MTGCard):
     conn = get_connection()
-    conn.execute("PRAGMA foreign_keys = ON")
-
     Cquery = """ INSERT OR IGNORE INTO cards (
         id,set_code, collector_number,cmc,price_usd,price_usd_foil,
         color_identity,produced_mana,legalities) VALUES (
@@ -55,8 +54,6 @@ def insert_card(card: MTGCard):
 
 def init_db():
     conn = get_connection()
-    conn.execute("PRAGMA foreign_keys = ON")
-
     conn.execute(""" CREATE TABLE IF NOT EXISTS tags(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(50) NOT NULL UNIQUE,

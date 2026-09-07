@@ -31,7 +31,7 @@ class CollectionRequest(BaseModel):
 
 
 @apiRouter.post("/cards")
-async def update_collection(dados: CollectionRequest):
+def update_collection(dados: CollectionRequest):
     update_inventory(
         dados.name,
         dados.own_qty, 
@@ -46,7 +46,7 @@ class DeckRequest(BaseModel):
     color: str 
 
 @apiRouter.post("/decks")
-async def create_deck(deck: DeckRequest):
+def create_deck(deck: DeckRequest):
     add_deck(deck.name, 
     deck.format, 
     deck.color
@@ -55,11 +55,11 @@ async def create_deck(deck: DeckRequest):
 
 
 @apiRouter.get("/decks")
-async def get_decks():
+def get_decks():
     return view_decks()
 
 @apiRouter.get("/cards")
-async def get_collection(filter:str = "all"):
+def get_collection(filter:str = "all"):
     return view_colection(filter)
 
 
@@ -69,7 +69,7 @@ class CardToDeckRequest(BaseModel):
     quantity: int
 
 @apiRouter.post("/decks/cards")
-async def insert_card_to_deck(info: CardToDeckRequest):
+def insert_card_to_deck(info: CardToDeckRequest):
     add_card_to_deck(
         info.deck_name, 
         info.card_name, 
@@ -78,11 +78,11 @@ async def insert_card_to_deck(info: CardToDeckRequest):
     return "Carta adicionada ao deck"
 
 @apiRouter.get("/deck/cards/{deck}")
-async def get_decklist(deck: str):
+def get_decklist(deck: str):
     return show_decklist(deck)
 
 @apiRouter.get("/status")
-async def status():
+def status():
     server_data = {"status": "StB API online", "version": "1.0"}
 
     return server_data

@@ -1,8 +1,7 @@
-import json
 import urllib.parse
 
 import requests
-from surveil_the_bulk.models import CardFace, MTGCard
+from surveil_the_bulk.models import MTGCard
 
 url = "https://api.scryfall.com/cards/named?exact="
 headers = {"Accept": "application/json", "User-Agent": "STB:Surveil The Bulk"}

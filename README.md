@@ -56,3 +56,10 @@ Lá você poderá testar todas as rotas (adicionar cartas, buscar coleção, cri
 | `POST` | `/api/decks` | Cria um deck novo |
 | `POST` | `/api/decks/cards` | Adiciona cartas existentes a um deck |
 | `GET`  | `/api/deck/cards/{deck}` | Retorna a decklist de um deck específico |
+
+## 🧪 Testes e Qualidade
+Para rodar a suíte de testes E2E e o linter, utilize:
+```bash
+uv run pytest
+uv run ruff check
+```

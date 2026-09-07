@@ -6,16 +6,13 @@ readme = "README.md"
 authors = [
     { name = "Arthur Vieira", email = "arthurssivieira@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
-    "aiohttp>=3.14.3",
     "fastapi[standard]>=0.141.1",
     "pydantic>=2.13.5",
     "requests>=2.34.2",
 ]
 
-[project.scripts]
-surveil-the-bulk = "surveil_the_bulk.app:main"
 
 [build-system]
 requires = ["uv_build>=0.12.8,<0.13.0"]

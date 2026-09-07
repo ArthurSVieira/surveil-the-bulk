@@ -21,4 +21,3 @@ def test_criar_deck_com_dados_faltando_retorna_422():
     assert response.status_code == 422
     
     mensagem_de_erro = response.json()
-    print("\nERRO DO FASTAPI:", mensagem_de_erro)

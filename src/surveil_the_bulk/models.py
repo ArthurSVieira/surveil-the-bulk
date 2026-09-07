@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict, computed_field, AliasPath, model_validator, field_validator
+from pydantic import BaseModel, Field, ConfigDict, AliasPath, model_validator, field_validator
 from typing import Optional
 
 
