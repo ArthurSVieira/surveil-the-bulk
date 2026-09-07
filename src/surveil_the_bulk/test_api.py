@@ -14,7 +14,6 @@ def test_criar_deck_com_dados_faltando_retorna_422():
     payload_incompleto = {
         "name": "Deck Falso",
         "format": "modern"
-        # Opa, esquecemos o "color"!
     }
     
     response = client.post("/api/decks", json=payload_incompleto)
